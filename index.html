@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Интерактивный Сайт</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Сетка уменьшена в 2 раза: делим 100vw на 800 вместо 1600 */
+        :root {
+            --vx: calc(100vw / 800);
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #000;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #f7f7f7;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Исходная анимация вылета для ПК */
+        @keyframes flyIn { 
+            to { opacity: 1; transform: translate(0, 0) scale(1); } 
+        }
+
+        /* Новая плавная анимация вылета снизу для мобильных */
+        @keyframes flyInMobile {
+            from { opacity: 0; transform: translateY(100px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .btn-back {
+            position: absolute;
+            bottom: calc(12.5 * var(--vx));
+            right: calc(12.5 * var(--vx));
+            padding: calc(5 * var(--vx)) calc(12 * var(--vx));
+            background-color: #ffffff;
+            color: #5a738e;
+            font-size: calc(7 * var(--vx));
+            font-weight: 600;
+            letter-spacing: calc(0.25 * var(--vx));
+            border: calc(0.5 * var(--vx)) solid #e2e8f0; 
+            border-radius: calc(3 * var(--vx));
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 calc(1 * var(--vx)) calc(4 * var(--vx)) rgba(0, 0, 0, 0.05);
+            transform: translateX(-80%);
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        }
+        .btn-back:hover {
+            background-color: #5a738e;
+            color: #ffffff;
+            transform: translateX(-80%) translateY(-1px); 
+        }
+
+        /* Главный контейнер уменьшен до 800x450 */
+        .main-btn-container, .gallery-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: calc(800 * var(--vx));
+            height: calc(450 * var(--vx));
+            pointer-events: auto; 
+        }
+
+        .invisible-btn {
+            position: absolute;
+            width: calc(20 * var(--vx)); 
+            height: calc(20 * var(--vx)); 
+            cursor: pointer;
+            z-index: 9999;
+            background: transparent;
+            border: none;
+            outline: none;
+            transition: transform 0.2s ease;
+        }
+        .invisible-btn:hover { 
+            transform: scale(1.1); 
+        }
+
+        /* Координаты главных кнопок поделены ровно на 2 */
+        #btn-human { 
+            top: calc(250.5 * var(--vx)); 
+            left: calc(264.5 * var(--vx)); 
+        }
+        #btn-messenger { 
+            top: calc(250.5 * var(--vx)); 
+            left: calc(286.5 * var(--vx)); 
+        }
+
+        /* Размеры эскизов поделены ровно на 2 */
+        .thumb-btn {
+            position: absolute;
+            width: calc(182.5 * var(--vx)); 
+            height: calc(101.5 * var(--vx)); 
+            cursor: pointer;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: calc(3 * var(--vx));
+            box-shadow: 0 calc(2 * var(--vx)) calc(6 * var(--vx)) rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translate(-100vw, -100vh) scale(0);
+        }
+
+        .screen.active .thumb-btn {
+            animation: flyIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+        }
+        
+        .screen.active .thumb-btn:nth-child(1) { animation-delay: 0.1s; }
+        .screen.active .thumb-btn:nth-child(2) { animation-delay: 0.25s; }
+        .screen.active .thumb-btn:nth-child(3) { animation-delay: 0.4s; }
+        .screen.active .thumb-btn:nth-child(4) { animation-delay: 0.55s; }
+        .screen.active .thumb-btn:nth-child(5) { animation-delay: 0.7s; }
+        .screen.active .thumb-btn:nth-child(6) { animation-delay: 0.85s; }
+
+        .thumb-btn:hover {
+            transform: scale(1.05) !important;
+            outline: calc(1 * var(--vx)) solid #0066ff;
+            z-index: 5;
+            transition: transform 0.2s ease, outline 0.2s ease;
+        }
+
+        /* Расположение эскизов поделено на 2 */
+        #thumb1 { top: calc(85 * var(--vx)); left: calc(90 * var(--vx)); }
+        #thumb2 { top: calc(85 * var(--vx)); left: calc(308.5 * var(--vx)); }
+        #thumb3 { top: calc(85 * var(--vx)); left: calc(527 * var(--vx)); }
+        
+        #thumb4 { top: calc(260 * var(--vx)); left: calc(90 * var(--vx)); }
+        #thumb5 { top: calc(260 * var(--vx)); left: calc(308.5 * var(--vx)); }
+        #thumb6 { top: calc(260 * var(--vx)); left: calc(527 * var(--vx)); }
+
+        /* Идеальная мобильная адаптация с поддержкой плавной анимации */
+        @media (max-width: 768px) {
+            .screen {
+                background-size: contain; 
+                background-color: #ffffff; 
+                overflow-y: auto;       
+                padding: 0 15px;
+                background-origin: content-box;
+            }
+
+            #screen-main, #screen-menu1, #screen-menu2 { 
+                background-size: cover !important; 
+                padding: 0 !important;
+                background-origin: padding-box;
+            }
+
+            #screen-main { background-image: url('main-mobile.jpg') !important; }
+            #screen-menu1 { background-image: url('menu1-mobile.jpg') !important; }
+            #screen-menu2 { background-image: url('menu2-mobile.jpg') !important; }
+
+            .main-btn-container {
+                position: absolute !important;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                transform: none !important;
+                display: block !important;
+                padding: 0 !important;
+            }
+
+            .invisible-btn {
+                position: absolute !important;
+                width: 50px !important; 
+                height: 50px !important;
+                cursor: pointer;
+                z-index: 9999;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0px !important;
+                outline: none !important;
+            }
+
+            #btn-human { top: 33.5%; left: 30%; }
+            #btn-messenger { top: 42.3%; left: 67.5%; }
+
+            .gallery-container {
+                position: static;
+                transform: none;
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 25px;
+                padding: 60px 30px 90px 30px;
+            }
+
+            /* Эскизы на мобильном: сброс абсолютных координат, ровное центрирование и анимация */
+            .thumb-btn {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                width: 90% !important;
+                height: auto !important; 
+                aspect-ratio: 365 / 203 !important;
+                max-width: none !important; 
+                background-size: cover !important;
+                margin: 0 auto !important;
+                opacity: 0;
+                transform: translateY(100px) scale(0.9);
+            }
+
+            .screen.active .thumb-btn {
+                animation: flyInMobile 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards !important;
+            }
+
+            .btn-back {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%) !important;
+                width: 80%;
+                max-width: 200px;
+                height: 44px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 15px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            }
+            .btn-back:hover {
+                transform: translateX(-50%) translateY(-1px) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="screen-main" class="screen active" style="background-image: url('main.jpg');">
+        <div class="main-btn-container">
+            <div id="btn-human" class="invisible-btn" onclick="goToScreen('screen-menu1')" title="Галерея"></div>
+            <div id="btn-messenger" class="invisible-btn" onclick="goToScreen('screen-menu2')" title="Контакты"></div>
+        </div>
+    </div>
+
+    <div id="screen-menu1" class="screen" style="background-image: url('menu1.jpg');">
+        <div class="gallery-container">
+            <div id="thumb1" class="thumb-btn" style="background-image: url('page1.jpg');" onclick="goToScreen('screen-p1')"></div>
+            <div id="thumb2" class="thumb-btn" style="background-image: url('page2.jpg');" onclick="goToScreen('screen-p2')"></div>
+            <div id="thumb3" class="thumb-btn" style="background-image: url('page3.jpg');" onclick="goToScreen('screen-p3')"></div>
+            <div id="thumb4" class="thumb-btn" style="background-image: url('page4.jpg');" onclick="goToScreen('screen-p4')"></div>
+            <div id="thumb5" class="thumb-btn" style="background-image: url('page5.jpg');" onclick="goToScreen('screen-p5')"></div>
+            <div id="thumb6" class="thumb-btn" style="background-image: url('page6.jpg');" onclick="goToScreen('screen-p6')"></div>
+        </div>
+        <button class="btn-back" onclick="goToScreen('screen-main')">Вернуться</button>
+    </div>
+
+    <div id="screen-menu2" class="screen" style="background-image: url('menu2.jpg');">
+        <button class="btn-back" onclick="goToScreen('screen-main')">Вернуться</button>
+    </div>
+
+    <!-- Внутренние страницы галереи -->
+    <div id="screen-p1" class="screen" style="background-image: url('page1.jpg');"><button class="btn-back" onclick="goToScreen('screen-menu1')">Вернуться</button></div>
+    <div id="screen-p2" class="screen" style="background-image: url('page2.jpg');"><button class="btn-back" onclick="goToScreen('screen-menu1')">Вернуться</button></div>
+    <div id="screen-p3" class="screen" style="background-image: url('page3.jpg');"><button class="btn-back" onclick="goToScreen('screen-menu1')">Вернуться</button></div>
+    <div id="screen-p4" class="screen" style="background-image: url('page4.jpg');"><button class="btn-back" onclick="goToScreen('screen-menu1')">Вернуться</button></div>
+    <div id="screen-p5" class="screen" style="background-image: url('page5.jpg');"><button class="btn-back" onclick="goToScreen('screen-menu1')">Вернуться</button></div>
+    <div id="screen-p6" class="screen" style="background-image: url('page6.jpg');"><button class="btn-back" onclick="goToScreen('screen-menu1')">Вернуться</button></div>
+
+    <script>
+        function goToScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.classList.remove('active'));
+            
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
